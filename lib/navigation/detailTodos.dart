@@ -14,7 +14,15 @@ class DetailTodos extends StatelessWidget {
       ),
       body: Padding(
         padding: EdgeInsets.all(20),
-        child: Text(todo.description),
+        child: Center(
+          child: Container(
+            child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context, 'Pop');
+                },
+                child: Text("Hello")),
+          ),
+        ),
       ),
     );
   }

@@ -1,9 +1,7 @@
-import 'dart:js';
-
+import 'package:flutter/material.dart';
 import 'package:example/models/todos.dart';
 import 'package:example/navigation/detailTodos.dart';
 import 'package:example/navigation/home.dart';
-import 'package:flutter/material.dart';
 
 void main() => runApp(
       MaterialApp(
@@ -16,7 +14,7 @@ void main() => runApp(
                     (index) =>
                         Todos('Todo $index', 'Description todo for $index')),
               ),
-          '/detail_todo': (context) => DetailTodos()
+          '/detail_todo': (context) => const DetailTodos()
         },
       ),
     );
