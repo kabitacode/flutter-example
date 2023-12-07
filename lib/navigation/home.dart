@@ -2,10 +2,16 @@ import 'package:example/models/todos.dart';
 import 'package:example/navigation/detailTodos.dart';
 import 'package:flutter/material.dart';
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
   const Home({Key? key, required this.todo}) : super(key: key);
-
   final List<Todos> todo;
+
+  @override
+  _HomeState createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  List<Todos> todo = [];
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +25,19 @@ class Home extends StatelessWidget {
             return RenderItem(todo: todo, index: index);
           }),
       floatingActionButton: FloatingActionButton.small(
-        onPressed: () {},
+        onPressed: () {
+          showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return AddToForm(
+                  onAddTodo: (item) {
+                    setState(() {
+                      todo.add(item);
+                    });
+                  },
+                );
+              });
+        },
         child: Icon(Icons.add),
       ),
     );
@@ -39,12 +57,72 @@ class RenderItem extends StatefulWidget {
 class _RenderItemState extends State<RenderItem> {
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(widget.todo[widget.index].title),
-      subtitle: Text(widget.todo[widget.index].description),
-      onTap: () {
-        _navigateAndDisplaySelection(context);
-      },
+    return Padding(
+      padding: EdgeInsets.all(10),
+      child: Row(
+        children: [
+          Expanded(
+              flex: 7,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        margin: EdgeInsets.only(right: 5),
+                        child: Text(
+                          "Title",
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w400),
+                        ),
+                      ),
+                      SizedBox(
+                        child: Text(":"),
+                        width: 10,
+                      ),
+                      Container(
+                        child: Text(widget.todo[widget.index].title),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 8,
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        margin: EdgeInsets.only(right: 5),
+                        child: Text(
+                          "Description",
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w400),
+                        ),
+                      ),
+                      SizedBox(
+                        child: Text(":"),
+                        width: 10,
+                      ),
+                      Container(
+                        child: Text(widget.todo[widget.index].description),
+                      ),
+                    ],
+                  ),
+                ],
+              )),
+          Expanded(
+              flex: 2,
+              child: Row(
+                children: [
+                  Container(
+                    child: IconButton(onPressed: () {}, icon: Icon(Icons.edit)),
+                  ),
+                  Container(
+                    child: IconButton(
+                        onPressed: () {}, icon: Icon(Icons.delete_outline)),
+                  ),
+                ],
+              )),
+        ],
+      ),
     );
   }
 
@@ -66,5 +144,96 @@ class _RenderItemState extends State<RenderItem> {
       ..showSnackBar(SnackBar(content: Text('$result')));
 
     print(result);
+  }
+}
+
+class AddToForm extends StatefulWidget {
+  final Function(Todos) onAddTodo;
+
+  const AddToForm({Key? key, required this.onAddTodo}) : super(key: key);
+
+  @override
+  _AddToFormState createState() => _AddToFormState();
+}
+
+class _AddToFormState extends State<AddToForm> {
+  TextEditingController _titleController = TextEditingController();
+  TextEditingController _descController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 300,
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          children: <Widget>[
+            Container(
+              margin: EdgeInsets.only(bottom: 20),
+              child: Text(
+                "Add Todo",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.only(bottom: 20),
+              child: TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                    border: OutlineInputBorder(), hintText: "Input Title"),
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.only(bottom: 20),
+              child: TextField(
+                controller: _descController,
+                decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: "Input Description"),
+              ),
+            ),
+            ElevatedButton(
+                onPressed: () {
+                  // Validate and create a new Todos object
+                  if (_titleController.text.isNotEmpty &&
+                      _descController.text.isNotEmpty) {
+                    Todos newItem =
+                        Todos(_titleController.text, _descController.text);
+                    // Call the callback function to add the newTodo
+                    widget.onAddTodo(newItem);
+
+                    //clear textField
+                    _titleController.clear();
+                    _descController.clear();
+
+                    //Close BottomSheet
+                    Navigator.pop(context);
+                  } else {
+                    validationError(context);
+                  }
+                },
+                child: Text("Submit"))
+          ],
+        ),
+      ),
+    );
+  }
+
+  void validationError(BuildContext context) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Error!"),
+            content: Text("Title and description cannot be empty."),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Got it!"))
+            ],
+          );
+        });
   }
 }
