@@ -8,12 +8,7 @@ void main() => runApp(
         title: "Example",
         initialRoute: '/',
         routes: {
-          '/': (context) => Home(
-                todo: List.generate(
-                    100,
-                    (index) =>
-                        Todos('Todo $index', 'Description todo for $index')),
-              ),
+          '/': (context) => Home(todo: []),
           '/detail_todo': (context) => const DetailTodos()
         },
       ),
