@@ -224,7 +224,7 @@ class _AddToFormState extends State<AddToForm> {
 
   @override
   Widget build(BuildContext context) {
-    final Todos todoo;
+    var isEdit = widget.initialTodo != null && widget.initialTodo is Todos;
 
     return Container(
       height: 300,
@@ -234,8 +234,8 @@ class _AddToFormState extends State<AddToForm> {
           children: <Widget>[
             Container(
               margin: EdgeInsets.only(bottom: 20),
-              child: const Text(
-                "Add Todo",
+              child: Text(
+                isEdit ? "Edit Todo" : "Add Todo",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
