@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:example/models/todos.dart';
 import 'package:example/navigation/detailTodos.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +16,12 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   List<Todos> todo = [];
 
+  void _removeTodoItem(int index) {
+    setState(() {
+      todo.removeAt(index);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,7 +31,12 @@ class _HomeState extends State<Home> {
       body: ListView.builder(
           itemCount: todo?.length ?? 20,
           itemBuilder: (context, index) {
-            return RenderItem(todo: todo, index: index);
+            return RenderItem(
+                todo: todo,
+                index: index,
+                onRemove: () {
+                  _removeTodoItem(index);
+                });
           }),
       floatingActionButton: FloatingActionButton.small(
         onPressed: () {
@@ -35,6 +49,7 @@ class _HomeState extends State<Home> {
                       todo.add(item);
                     });
                   },
+                  initialTodo: {},
                 );
               });
         },
@@ -47,14 +62,34 @@ class _HomeState extends State<Home> {
 class RenderItem extends StatefulWidget {
   final List<Todos> todo;
   final int index;
+  final VoidCallback onRemove; // Callback function to remove item
 
-  const RenderItem({super.key, required this.todo, required this.index});
+  const RenderItem(
+      {super.key,
+      required this.todo,
+      required this.index,
+      required this.onRemove});
 
   @override
   State<RenderItem> createState() => _RenderItemState();
 }
 
 class _RenderItemState extends State<RenderItem> {
+  void _editTodo() {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return AddToForm(
+            onAddTodo: (item) {
+              setState(() {
+                widget.todo[widget.index] = item;
+              });
+            },
+            initialTodo: widget.todo[widget.index],
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -68,42 +103,38 @@ class _RenderItemState extends State<RenderItem> {
                   Row(
                     children: [
                       Container(
-                        margin: EdgeInsets.only(right: 5),
-                        child: Text(
+                        margin: const EdgeInsets.only(right: 5),
+                        child: const Text(
                           "Title",
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w400),
                         ),
                       ),
-                      SizedBox(
-                        child: Text(":"),
+                      const SizedBox(
                         width: 10,
+                        child: Text(":"),
                       ),
-                      Container(
-                        child: Text(widget.todo[widget.index].title),
-                      ),
+                      Text(widget.todo[widget.index].title),
                     ],
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 8,
                   ),
                   Row(
                     children: [
                       Container(
-                        margin: EdgeInsets.only(right: 5),
-                        child: Text(
+                        margin: const EdgeInsets.only(right: 5),
+                        child: const Text(
                           "Description",
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w400),
                         ),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         child: Text(":"),
                         width: 10,
                       ),
-                      Container(
-                        child: Text(widget.todo[widget.index].description),
-                      ),
+                      Text(widget.todo[widget.index].description),
                     ],
                   ),
                 ],
@@ -113,11 +144,15 @@ class _RenderItemState extends State<RenderItem> {
               child: Row(
                 children: [
                   Container(
-                    child: IconButton(onPressed: () {}, icon: Icon(Icons.edit)),
+                    child: IconButton(
+                        onPressed: _editTodo, icon: Icon(Icons.edit)),
                   ),
                   Container(
                     child: IconButton(
-                        onPressed: () {}, icon: Icon(Icons.delete_outline)),
+                        onPressed: () {
+                          widget.onRemove();
+                        },
+                        icon: Icon(Icons.delete_outline)),
                   ),
                 ],
               )),
@@ -149,19 +184,48 @@ class _RenderItemState extends State<RenderItem> {
 
 class AddToForm extends StatefulWidget {
   final Function(Todos) onAddTodo;
+  // ignore: prefer_typing_uninitialized_variables
+  final initialTodo;
 
-  const AddToForm({Key? key, required this.onAddTodo}) : super(key: key);
+  const AddToForm(
+      {Key? key, required this.onAddTodo, required Object this.initialTodo})
+      : super(key: key);
 
   @override
   _AddToFormState createState() => _AddToFormState();
 }
 
 class _AddToFormState extends State<AddToForm> {
-  TextEditingController _titleController = TextEditingController();
-  TextEditingController _descController = TextEditingController();
+  late TextEditingController _titleController;
+  late TextEditingController _descController;
+  late Todos initialTodo;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+    _descController = TextEditingController();
+
+    initialTodo = widget.initialTodo is Todos
+        ? widget.initialTodo
+        : Todos("", ""); // Provide default values if initialTodo is null
+    _titleController.text = initialTodo.title;
+    _descController.text = initialTodo.description;
+
+    // Check if initialTodo is not null and is an instance of Todos
+    if (widget.initialTodo != null && widget.initialTodo is Todos) {
+      initialTodo = widget.initialTodo;
+      _titleController.text = initialTodo.title;
+      _descController.text = initialTodo.description;
+    } else {
+      initialTodo = Todos("", "");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final Todos todoo;
+
     return Container(
       height: 300,
       child: Padding(
@@ -170,16 +234,16 @@ class _AddToFormState extends State<AddToForm> {
           children: <Widget>[
             Container(
               margin: EdgeInsets.only(bottom: 20),
-              child: Text(
+              child: const Text(
                 "Add Todo",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
             Container(
-              margin: EdgeInsets.only(bottom: 20),
+              margin: const EdgeInsets.only(bottom: 20),
               child: TextField(
                 controller: _titleController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                     border: OutlineInputBorder(), hintText: "Input Title"),
               ),
             ),
@@ -187,26 +251,24 @@ class _AddToFormState extends State<AddToForm> {
               margin: EdgeInsets.only(bottom: 20),
               child: TextField(
                 controller: _descController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: "Input Description"),
               ),
             ),
             ElevatedButton(
                 onPressed: () {
-                  // Validate and create a new Todos object
                   if (_titleController.text.isNotEmpty &&
                       _descController.text.isNotEmpty) {
                     Todos newItem =
                         Todos(_titleController.text, _descController.text);
-                    // Call the callback function to add the newTodo
-                    widget.onAddTodo(newItem);
-
-                    //clear textField
+                    if (initialTodo == null) {
+                      widget.onAddTodo(newItem);
+                    } else {
+                      widget.onAddTodo(newItem);
+                    }
                     _titleController.clear();
                     _descController.clear();
-
-                    //Close BottomSheet
                     Navigator.pop(context);
                   } else {
                     validationError(context);
@@ -224,14 +286,14 @@ class _AddToFormState extends State<AddToForm> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Error!"),
-            content: Text("Title and description cannot be empty."),
+            title: const Text("Error!"),
+            content: const Text("Title and description cannot be empty."),
             actions: [
               TextButton(
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: Text("Got it!"))
+                  child: const Text("Got it!"))
             ],
           );
         });
