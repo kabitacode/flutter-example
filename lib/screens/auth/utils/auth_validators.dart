@@ -29,4 +29,32 @@ class AuthValidators {
     // Else its valid
     return null;
   }
+
+  //Password validation
+  String? passwordValidator(String? val) {
+    final String password = val as String;
+
+    if (password.isEmpty || password.length <= 5) return passwordErrMsg;
+
+    return null;
+  }
+
+  // Confirm password validation
+
+  String? confirmPasswordValidator(String? val, firstPasswordInpText) {
+    final String firstPassword = firstPasswordInpText;
+    final String secondPassword = val as String;
+    // If either of the password field is empty
+    // Or if thier length do not match then we don't need to compare their content
+    if (firstPassword.isEmpty ||
+        secondPassword.isEmpty ||
+        firstPassword.length != secondPassword.length) {
+      return confirmPasswordErrMsg;
+    }
+
+    //  If two passwords do not match then send error message
+    if (firstPassword != secondPassword) return confirmPasswordErrMsg;
+
+    return null;
+  }
 }
